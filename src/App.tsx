@@ -215,14 +215,29 @@ export default function App() {
                   <summary className="cursor-pointer text-sm text-terracotta hover:underline list-none">
                     📖 Показать рецепт и ингредиенты
                   </summary>
-                  <div className="mt-3 pl-4 border-l-2 border-warm">
-                    <h4 className="font-medium mb-1">Ингредиенты</h4>
+                                    <div className="mt-3 pl-4 border-l-2 border-warm">
+                    <h4 className="font-medium mb-1">
+                      Ингредиенты{' '}
+                      <span className="text-xs text-brown/50 font-normal">
+                        (на {settings.adults} взр.
+                        {settings.children > 0
+                          ? ` + ${settings.children} реб.`
+                          : ''}
+                        )
+                      </span>
+                    </h4>
                     <ul className="text-sm text-brown/80 mb-3 space-y-0.5">
-                      {selectedDish.ingredients.map((ing) => (
-                        <li key={ing.name}>
-                          • {ing.name} — {ing.amount} {ing.unit}
-                        </li>
-                      ))}
+                      {selectedDish.ingredients.map((ing) => {
+                        const scaled = ing.amount * portionFactor;
+                        return (
+                          <li key={ing.name}>
+                            • {ing.name} —{' '}
+                            <span className="font-medium text-brown">
+                              {roundByUnit(scaled, ing.unit)} {ing.unit}
+                            </span>
+                          </li>
+                        );
+                      })}
                     </ul>
                     <h4 className="font-medium mb-1">Приготовление</h4>
                     <p className="text-sm text-brown/80 leading-relaxed">
