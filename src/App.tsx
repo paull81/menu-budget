@@ -2,6 +2,13 @@ import { useState, useMemo } from 'react';
 import { dishes, days, meals } from './data';
 import Settings, { type SettingsData } from './Settings';
 
+function roundByUnit(value: number, unit: string): number {
+  if (unit === 'шт' || unit === 'зуб') return Math.max(1, Math.round(value));
+  if (unit === 'г') return Math.round(value / 5) * 5;
+  if (unit === 'мл') return Math.round(value / 10) * 10;
+  return Math.round(value);
+}
+
 type Plan = Record<string, Record<string, string | undefined>>;
 
 export default function App() {
@@ -61,15 +68,17 @@ export default function App() {
     return result;
   }, [plan, settings]);
 
+  const portionFactor = settings
+    ? settings.adults * 1.0 + settings.children * 0.6
+    : 1;
+
   const shoppingList = useMemo(() => {
     const map = new Map<
       string,
       { name: string; amount: number; unit: string; price: number }
     >();
 
-    const portionFactor = settings
-      ? settings.adults * 1.0 + settings.children * 0.6
-      : 1;
+    
 
     selectedDishes.forEach((dish) => {
       dish.ingredients.forEach((ing) => {
