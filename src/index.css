@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #fdf6ec;
+  --color-warm: #f5e6d3;
+  --color-terracotta: #c97b5a;
+  --color-terracotta-dark: #a85f42;
+  --color-sage: #8a9a7b;
+  --color-brown: #5c4a3a;
+  --font-display: "Georgia", serif;
+}
