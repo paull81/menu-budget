@@ -20,6 +20,12 @@ export default function App() {
   });
 
   function saveSettings(data: SettingsData) {
+    // Если кухня изменилась — очищаем план, он больше неактуален
+    if (settings && settings.cuisine !== data.cuisine) {
+      setPlan({});
+      localStorage.removeItem('weekPlan');
+    }
+
     setSettings(data);
     localStorage.setItem('settings', JSON.stringify(data));
   }
