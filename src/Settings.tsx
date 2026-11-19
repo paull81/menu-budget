@@ -6,7 +6,6 @@ export type SettingsData = {
   store: 'pyaterochka' | 'magnit';
   mealMode: 'shared' | 'separate';
   excluded: string[];
-  cuisine: 'russian' | 'belarusian' | 'ukrainian';
 };
 
 const EXCLUDED_OPTIONS = [
@@ -19,12 +18,6 @@ const EXCLUDED_OPTIONS = [
   'Свинина',
   'Говядина',
 ];
-
-const CUISINES = [
-  { value: 'russian', label: 'Русская' },
-  { value: 'belarusian', label: 'Белорусская' },
-  { value: 'ukrainian', label: 'Украинская' },
-] as const;
 
 type Props = {
   initial: SettingsData;
@@ -175,37 +168,7 @@ export default function Settings({ initial, onSave }: Props) {
           </div>
         </section>
 
-        {/* Кухня */}
-        <section className="mb-8">
-          <h2 className="font-display text-xl mb-3">Кухня</h2>
-          <div className="flex gap-3">
-            {CUISINES.map((c) => (
-              <label
-                key={c.value}
-                className={`flex-1 p-3 rounded-lg border cursor-pointer text-center transition ${
-                  data.cuisine === c.value
-                    ? 'bg-terracotta text-white border-terracotta'
-                    : 'bg-warm/50 border-warm'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="cuisine"
-                  value={c.value}
-                  checked={data.cuisine === c.value}
-                  onChange={() =>
-                    setData({
-                      ...data,
-                      cuisine: c.value as SettingsData['cuisine'],
-                    })
-                  }
-                  className="hidden"
-                />
-                {c.label}
-              </label>
-            ))}
-          </div>
-        </section>
+        
 
         <button
           onClick={() => onSave(data)}
