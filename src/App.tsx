@@ -5,7 +5,7 @@ import Settings, { type SettingsData } from './Settings';
 type Plan = Record<string, Record<string, string | undefined>>;
 
 export default function App() {
-    const [plan, setPlan] = useState<Plan>(() => {
+  const [plan, setPlan] = useState<Plan>(() => {
     const saved = localStorage.getItem('weekPlan');
     return saved ? JSON.parse(saved) : {};
   });
@@ -14,18 +14,19 @@ export default function App() {
     const saved = localStorage.getItem('budget');
     return saved ? Number(saved) : 3000;
   });
+
   const [settings, setSettings] = useState<SettingsData | null>(() => {
     const saved = localStorage.getItem('settings');
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [activeDay, setActiveDay] = useState<string>(days[0]);
+
   function saveSettings(data: SettingsData) {
-    // Если кухня изменилась — очищаем план, он больше неактуален
     if (settings && settings.cuisine !== data.cuisine) {
       setPlan({});
       localStorage.removeItem('weekPlan');
     }
-
     setSettings(data);
     localStorage.setItem('settings', JSON.stringify(data));
   }
@@ -43,7 +44,8 @@ export default function App() {
     setBudget(value);
     localStorage.setItem('budget', String(value));
   }
-const selectedDishes = useMemo(() => {
+
+  const selectedDishes = useMemo(() => {
     if (!settings) return [];
     const result: typeof dishes = [];
     Object.values(plan).forEach((day) => {
@@ -51,9 +53,7 @@ const selectedDishes = useMemo(() => {
         if (!id) return;
         const dish = dishes.find((d) => d.id === id);
         if (!dish) return;
-        // пропускаем блюда не из текущей кухни
         if (dish.cuisine !== settings.cuisine) return;
-        // пропускаем блюда с исключёнными продуктами
         const hasExcluded = dish.ingredients.some((ing) =>
           ing.tags.some((tag) => settings.excluded.includes(tag))
         );
@@ -70,7 +70,6 @@ const selectedDishes = useMemo(() => {
       { name: string; amount: number; unit: string; price: number }
     >();
 
-    // коэффициент: взрослый = 1.0, ребёнок = 0.6
     const portionFactor = settings
       ? settings.adults * 1.0 + settings.children * 0.6
       : 1;
@@ -102,6 +101,7 @@ const selectedDishes = useMemo(() => {
 
   const total = shoppingList.reduce((sum, item) => sum + item.price, 0);
   const overBudget = total > budget;
+
   if (!settings) {
     return (
       <Settings
@@ -120,7 +120,7 @@ const selectedDishes = useMemo(() => {
 
   return (
     <div className="min-h-screen bg-cream text-brown p-6">
-      <header className="max-w-6xl mx-auto mb-8 text-center">
+      <header className="max-w-6xl mx-auto mb-6 text-center">
         <h1 className="font-display text-4xl text-terracotta-dark mb-2">
           Меню на неделю
         </h1>
@@ -136,57 +136,101 @@ const selectedDishes = useMemo(() => {
         </button>
       </header>
 
-      <div className="max-w-6xl mx-auto overflow-x-auto mb-10">
-        <table className="w-full border-collapse bg-white/60 rounded-2xl shadow-sm">
-          <thead>
-            <tr>
-              <th className="p-3 text-left text-brown/60 font-normal"></th>
-              {days.map((d) => (
-                <th key={d} className="p-3 text-center font-display text-lg">
-                  {d}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {meals.map((meal) => (
-              <tr key={meal.key} className="border-t border-warm">
-                <td className="p-3 font-medium text-terracotta-dark">
-                  {meal.label}
-                </td>
-                {days.map((day) => {
-                  const options = dishes.filter((d) => {
-  if (d.mealType !== meal.key) return false;
-  if (d.cuisine !== settings.cuisine) return false;
-  const hasExcluded = d.ingredients.some((ing) =>
-    ing.tags.some((tag) => settings.excluded.includes(tag))
-  );
-  return !hasExcluded;
-});
-                  const value = plan[day]?.[meal.key] ?? '';
-                  return (
-                    <td key={day} className="p-2">
-                      <select
-                        value={value}
-                        onChange={(e) => setDish(day, meal.key, e.target.value)}
-                        className="w-full p-2 rounded-lg bg-warm/50 border border-warm text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/40"
-                      >
-                        <option value="">—</option>
-                        {options.map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {d.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Переключатель дней */}
+      <div className="max-w-6xl mx-auto mb-6">
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {days.map((d) => {
+            const filled = plan[d] && Object.values(plan[d]).some(Boolean);
+            return (
+              <button
+                key={d}
+                onClick={() => setActiveDay(d)}
+                className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition ${
+                  activeDay === d
+                    ? 'bg-terracotta text-white'
+                    : 'bg-white/60 text-brown hover:bg-white'
+                }`}
+              >
+                {d}
+                {filled && (
+                  <span
+                    className={`ml-2 inline-block w-2 h-2 rounded-full ${
+                      activeDay === d ? 'bg-white' : 'bg-sage'
+                    }`}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
+      {/* Приёмы пищи выбранного дня */}
+      <div className="max-w-6xl mx-auto mb-10 space-y-4">
+        {meals.map((meal) => {
+          const options = dishes.filter((d) => {
+            if (d.mealType !== meal.key) return false;
+            if (d.cuisine !== settings.cuisine) return false;
+            const hasExcluded = d.ingredients.some((ing) =>
+              ing.tags.some((tag) => settings.excluded.includes(tag))
+            );
+            return !hasExcluded;
+          });
+          const value = plan[activeDay]?.[meal.key] ?? '';
+          const selectedDish = value
+            ? dishes.find((d) => d.id === value)
+            : null;
+
+          return (
+            <div
+              key={meal.key}
+              className="bg-white/70 rounded-2xl p-4 shadow-sm"
+            >
+              <div className="flex flex-col md:flex-row md:items-center gap-3">
+                <div className="font-display text-xl text-terracotta-dark md:w-40">
+                  {meal.label}
+                </div>
+                <select
+                  value={value}
+                  onChange={(e) => setDish(activeDay, meal.key, e.target.value)}
+                  className="flex-1 p-2 rounded-lg bg-warm/50 border border-warm focus:outline-none focus:ring-2 focus:ring-terracotta/40"
+                >
+                  <option value="">— выбери блюдо —</option>
+                  {options.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedDish && (
+                <details className="mt-3 group">
+                  <summary className="cursor-pointer text-sm text-terracotta hover:underline list-none">
+                    📖 Показать рецепт и ингредиенты
+                  </summary>
+                  <div className="mt-3 pl-4 border-l-2 border-warm">
+                    <h4 className="font-medium mb-1">Ингредиенты</h4>
+                    <ul className="text-sm text-brown/80 mb-3 space-y-0.5">
+                      {selectedDish.ingredients.map((ing) => (
+                        <li key={ing.name}>
+                          • {ing.name} — {ing.amount} {ing.unit}
+                        </li>
+                      ))}
+                    </ul>
+                    <h4 className="font-medium mb-1">Приготовление</h4>
+                    <p className="text-sm text-brown/80 leading-relaxed">
+                      {selectedDish.recipe}
+                    </p>
+                  </div>
+                </details>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Список покупок + бюджет */}
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-6">
         <section className="bg-white/70 rounded-2xl p-6 shadow-sm">
           <h2 className="font-display text-2xl text-terracotta-dark mb-4">
@@ -233,13 +277,13 @@ const selectedDishes = useMemo(() => {
           />
           <div className="flex justify-between text-lg mb-2">
             <span>Итого:</span>
-            <span className="font-display text-terracotta-dark">{Math.round(total)} ₽</span>
+            <span className="font-display text-terracotta-dark">
+              {Math.round(total)} ₽
+            </span>
           </div>
           <div
             className={`p-3 rounded-lg text-center font-medium ${
-              overBudget
-                ? 'bg-red-100 text-red-700'
-                : 'bg-sage/20 text-sage'
+              overBudget ? 'bg-red-100 text-red-700' : 'bg-sage/20 text-sage'
             }`}
           >
             {overBudget
