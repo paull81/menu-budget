@@ -44,16 +44,25 @@ export default function App() {
     localStorage.setItem('budget', String(value));
   }
 const selectedDishes = useMemo(() => {
+    if (!settings) return [];
     const result: typeof dishes = [];
     Object.values(plan).forEach((day) => {
       Object.values(day).forEach((id) => {
         if (!id) return;
         const dish = dishes.find((d) => d.id === id);
-        if (dish) result.push(dish);
+        if (!dish) return;
+        // пропускаем блюда не из текущей кухни
+        if (dish.cuisine !== settings.cuisine) return;
+        // пропускаем блюда с исключёнными продуктами
+        const hasExcluded = dish.ingredients.some((ing) =>
+          ing.tags.some((tag) => settings.excluded.includes(tag))
+        );
+        if (hasExcluded) return;
+        result.push(dish);
       });
     });
     return result;
-  }, [plan]);
+  }, [plan, settings]);
 
   const shoppingList = useMemo(() => {
     const map = new Map<
