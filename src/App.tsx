@@ -23,10 +23,7 @@ export default function App() {
   const [activeDay, setActiveDay] = useState<string>(days[0]);
 
   function saveSettings(data: SettingsData) {
-    if (settings && settings.cuisine !== data.cuisine) {
-      setPlan({});
-      localStorage.removeItem('weekPlan');
-    }
+    
     setSettings(data);
     localStorage.setItem('settings', JSON.stringify(data));
   }
@@ -53,7 +50,7 @@ export default function App() {
         if (!id) return;
         const dish = dishes.find((d) => d.id === id);
         if (!dish) return;
-        if (dish.cuisine !== settings.cuisine) return;
+       
         const hasExcluded = dish.ingredients.some((ing) =>
           ing.tags.some((tag) => settings.excluded.includes(tag))
         );
@@ -111,7 +108,7 @@ export default function App() {
           store: 'pyaterochka',
           mealMode: 'shared',
           excluded: [],
-          cuisine: 'russian',
+          
         }}
         onSave={saveSettings}
       />
@@ -170,7 +167,7 @@ export default function App() {
         {meals.map((meal) => {
           const options = dishes.filter((d) => {
             if (d.mealType !== meal.key) return false;
-            if (d.cuisine !== settings.cuisine) return false;
+            
             const hasExcluded = d.ingredients.some((ing) =>
               ing.tags.some((tag) => settings.excluded.includes(tag))
             );
